@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { HiHome } from "react-icons/hi";
 import {
 	BiSearch,
@@ -8,11 +8,32 @@ import {
 	BiHeart,
 	BiBookmarkAlt,
 } from "react-icons/bi";
-import { signOut } from "next-auth/react";
+import { BsFillPersonFill } from "react-icons/bs";
+import { IoMdAlbums } from "react-icons/io";
+import { signOut, useSession } from "next-auth/react";
+import useSpotify from "@/hooks/useSpotify";
+import { useRecoilState } from "recoil";
+import { playlistIdState } from "@/atoms/playlistAtoms";
 
 const Sidebar = () => {
+	const { data: session } = useSession();
+	const spotifyApi = useSpotify();
+
+	const [playlists, setPlaylists] = useState();
+	const [playlistId, setPlaylistId] = useRecoilState(playlistIdState);
+
+	console.log(playlistId);
+
+	useEffect(() => {
+		if (spotifyApi.getAccessToken()) {
+			spotifyApi.getUserPlaylists().then((data) => {
+				setPlaylists(data.body.items);
+			});
+		}
+	}, [session, spotifyApi]);
+
 	return (
-		<div className="text-gray-200 p-4 text-sm md:text-base w-[50%] sm:w-[25%] overflow-y-hidden h-screen">
+		<div className="text-gray-200 p-4 text-xs md:text-sm lg:text-base w-[50%] sm:w-[25%] h-screen overflow-hidden">
 			<div className="bg-[#121212] rounded-lg flex flex-col space-y-4 p-6 mb-4">
 				<button className="flex items-center space-x-4 group">
 					<HiHome className="h-6 w-6" />
@@ -22,8 +43,16 @@ const Sidebar = () => {
 					<BiSearch className="h-6 w-6 " />
 					<span className="group-hover:font-bold"> Search</span>
 				</button>
+				<button className="flex items-center space-x-4 group">
+					<IoMdAlbums className="h-6 w-6 " />
+					<span className="group-hover:font-bold"> Albums</span>
+				</button>
+				<button className="flex items-center space-x-4 group">
+					<BsFillPersonFill className="h-6 w-6 " />
+					<span className="group-hover:font-bold"> Artists</span>
+				</button>
 			</div>
-			<div className="bg-[#121212] rounded-lg flex flex-col space-y-4 p-6 mb-4">
+			<div className="bg-[#121212] rounded-lg flex flex-col space-y-4 p-6 mb-4 overflow-y-scroll h-screen scrollbar-hide">
 				<div className="flex justify-between items-center">
 					<button className="flex items-center space-x-4 group">
 						<BiLibrary className="h-6 w-6" />
@@ -49,16 +78,15 @@ const Sidebar = () => {
 					</span>
 				</button>
 				{/* Playlists */}
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
-				<p className="cursor-pointer hover:font-bold">Playlists</p>
+				{playlists?.map((item) => (
+					<div
+						onClick={() => setPlaylistId(item.id)}
+						className="cursor-pointer hover:font-bold"
+						key={item.id}
+					>
+						{item.name}
+					</div>
+				))}
 			</div>
 		</div>
 	);
